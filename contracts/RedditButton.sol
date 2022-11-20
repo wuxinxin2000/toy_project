@@ -3,10 +3,10 @@
 pragma solidity >=0.6.6 <0.9.0;
 
 /**
-Write a contract in Solidity that is similar to The Button on reddit (r/thebutton),
- where participants pay a fixed amount of ether to call ​press_button​, and then
-  if 3 blocks pass without someone calling ​press_button​, whoever pressed the button
-   last can call claim_treasure​ and get the other participants’ deposits.
+  A contract similar to The Button on reddit (r/thebutton):
+  Participants pay a fixed amount of ether to call "press_button";
+  if 3 blocks pass without someone calling "press_button", whoever pressed the button
+  last can call "claim_treasure" and get the other participants’ deposits.
  */
 contract RedditButton {
     uint256 currentOrderNumber;
@@ -14,14 +14,12 @@ contract RedditButton {
     uint256 lastCallBlockNumber;
 
     address payable owner;
-    // // array of addresses who deposited
-    // address[] public funders;
-    //mapping to store which address depositeded how much ETH
+    //mapping from funders to their funded amount
     mapping(address => uint256) public addressToAmountFunded;
-    //mapping to store which address depositeded how much ETH
+    //mapping to store the funders' address with their click press_button order as key
     mapping(uint256 => address) public clickOrderToAddress;
 
-	event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
 
     constructor() {
         currentOrderNumber = 0;
@@ -38,14 +36,13 @@ contract RedditButton {
         clickOrderToAddress[currentOrderNumber] = msg.sender;
         lastCallBlockNumber = block.number;
 
-		    emit Transfer(msg.sender, owner, msg.value);
+	emit Transfer(msg.sender, owner, msg.value);
         return true;
     }
     //modifier: https://medium.com/coinmonks/solidity-tutorial-all-about-modifiers-a86cf81c14cb
     modifier onlyLastCall3BlocksAway() {
-        //is the message sender owner of the contract?
-        require(block.number > lastCallBlockNumber + 3, "not long enough");
-        require(msg.sender == clickOrderToAddress[currentOrderNumber], "");
+        require(block.number > lastCallBlockNumber + 3, "Wait not long enough");
+        require(msg.sender == clickOrderToAddress[currentOrderNumber], "NOT the last caller of press_button");
         _;
     }
     function claim_treasure() public payable onlyLastCall3BlocksAway {
@@ -56,9 +53,6 @@ contract RedditButton {
         }
         currentOrderNumber = 0;
         payable(msg.sender).transfer(temp);
-
-        // //funders array will be initialized to 0
-        // funders = new address[](0);
     }
     function get_totalAmountFunded() public view returns (uint256) {
       return totalAmountFunded;

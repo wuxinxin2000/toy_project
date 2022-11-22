@@ -14,6 +14,8 @@ developmentChains.includes(network.name)
       beforeEach(async function () {
         accounts = await ethers.getSigners();
         owner = accounts[0];
+        const RedditButton = await ethers.getContractFactory("RedditButton");
+        // redditButton = await RedditButton.attach("0xf4637bf2e66b1c3f560bb6420e9ef1be900b3331");
         redditButton = await (
           await ethers.getContractFactory("RedditButton")
         ).deploy();

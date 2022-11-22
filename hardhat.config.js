@@ -33,7 +33,12 @@ module.exports = {
     // },
     ganache: {
       url: GANACHE_RPC_URL,
-      // accounts: [PRIVATE_KEY],
+      accounts: [
+        "0x43410c24b18525e0c3b5fc77df170a702c330f9324de74dd2fc78b8467e7ad15",
+        "0xdb80783e2dc328300c7f84cdf243bb4504e3b4bc8f0d94ad612b881562382008",
+        "0x6710235661015e81ccd589cb2db95f3ff3f169103490083f7d79a7f0191e181a",
+        "0x83694db5e8bb614a1aae7d0d85800123b4c5961494a51808c3e1c8a8265464fa",
+      ],
       chainId: 1337,
     },
   },

@@ -4,15 +4,15 @@ require("@nomiclabs/hardhat-etherscan");
 // require("hardhat-deploy");
 
 const GANACHE_RPC_URL = "HTTP://127.0.0.1:7545";
-const PRIVATE_KEY =
+const PRIVATE_KEY_1 =
   "0x2e84483c0cdefe671a20453fcd18cda3ac9d6f627107af94383aeefdf881e630";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
-const networkConfig = {
-  31337: {
-    name: "localhost",
-  },
-};
+// const networkConfig = {
+//   31337: {
+//     name: "localhost",
+//   },
+// };
 
 const developmentChains = ["hardhat", "localhost"];
 
@@ -33,12 +33,12 @@ module.exports = {
     // },
     ganache: {
       url: GANACHE_RPC_URL,
-      accounts: [PRIVATE_KEY],
+      // accounts: [PRIVATE_KEY],
       chainId: 1337,
     },
   },
   solidity: "0.8.17",
-  networkConfig,
+  // networkConfig,
   developmentChains,
   namedAccounts: {
     deployer: {

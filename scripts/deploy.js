@@ -4,10 +4,14 @@
 // You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
 // will compile your contracts, add the Hardhat Runtime Environment's members to the
 // global scope, and execute the script.
-const hre = require("hardhat");
+const { hre, ethers } = require("hardhat");
+// const  = require("hardhat");
 
 async function main() {
-  const RedditButton = await hre.ethers.getContractFactory("RedditButton");
+  const [deployer] = await ethers.getSigners();
+  console.log("Deploying contracts with the account: ", deployer.address);
+  console.log("Account balance: ", (await deployer.getBalance()).toString());
+  const RedditButton = await ethers.getContractFactory("RedditButton");
   const redditButton = await RedditButton.deploy();
   await redditButton.deployed();
   console.log(`RedditButton contract is deployed to ${redditButton.address}`);
@@ -24,5 +28,5 @@ main()
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error);
-    process.exitCode = 1;
+    process.exit(1);
   });

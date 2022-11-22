@@ -1,66 +1,81 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.6.6 <0.9.0;
+pragma solidity ^0.8.17;
 
-/**
-  A contract similar to The Button on reddit (r/thebutton):
-  Participants pay a fixed amount of ether to call "press_button";
-  if 3 blocks pass without someone calling "press_button", whoever pressed the button
-  last can call "claim_treasure" and get the other participants’ deposits.
- */
 contract RedditButton {
-    uint256 currentOrderNumber;
     uint256 totalAmountFunded;
-    uint256 lastCallBlockNumber;
+    uint256 lastFundBlockNumber;
+    bool public started;
+    bool public ended;
 
-    address payable owner;
+    address payable private immutable owner;
+    address private lastFunder;
     //mapping from funders to their funded amount
-    mapping(address => uint256) public addressToAmountFunded;
-    //mapping to store the funders' address with their click press_button order as key
-    mapping(uint256 => address) public clickOrderToAddress;
+    // mapping(address => uint256) private addressToAmountFunded;
 
+    event Start();
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event ClaimTreasure(address winner, uint amount);
 
     constructor() {
-        currentOrderNumber = 0;
+        // currentOrderNumber = 0;
         totalAmountFunded = 0;
-        lastCallBlockNumber = block.number;
+        lastFundBlockNumber = block.number;
         owner = payable(msg.sender);
+        lastFunder = address(0);
     }
-    function press_button() public payable returns(bool sufficient) {
-        //if not, add to mapping and funders array
-        require(msg.value >= 1e18);
-        addressToAmountFunded[msg.sender] += msg.value;
-        totalAmountFunded += msg.value;
-        currentOrderNumber += 1;
-        clickOrderToAddress[currentOrderNumber] = msg.sender;
-        lastCallBlockNumber = block.number;
 
-	emit Transfer(msg.sender, owner, msg.value);
+    function start() external {
+        require(!started, "started");
+        require(msg.sender == owner, "not owner");
+
+        started = true;
+        emit Start();
+    }
+
+    function pressButton() external payable onlyStartedAndNotEnded returns(bool sufficient) {
+        //if not, add to mapping and funders array
+        require(msg.value >= 1e18, "Need at least 1 ETH.");
+	      emit Transfer(msg.sender, owner, msg.value);
+        // addressToAmountFunded[msg.sender] += msg.value;
+        totalAmountFunded += msg.value;
+        // currentOrderNumber += 1;
+        // clickOrderToAddress[currentOrderNumber] = msg.sender;
+        lastFunder = msg.sender;
+        lastFundBlockNumber = block.number;
+
         return true;
     }
     //modifier: https://medium.com/coinmonks/solidity-tutorial-all-about-modifiers-a86cf81c14cb
-    modifier onlyLastCall3BlocksAway() {
-        require(block.number > lastCallBlockNumber + 3, "Wait not long enough");
-        require(msg.sender == clickOrderToAddress[currentOrderNumber], "NOT the last caller of press_button");
+    modifier onlyStartedAndNotEnded() {
+        require(started, "not started");
+        require(!ended, "ended");
         _;
     }
-    function claim_treasure() public payable onlyLastCall3BlocksAway {
+    modifier onlyLastFunder3BlocksAway() {
+        // require(msg.sender == clickOrderToAddress[currentOrderNumber], "NOT the last funder of press_button");
+        // require(block.number > lastFundBlockNumber + 3, "Wait not long enough");
+        if (msg.sender != lastFunder) revert('RedditButton__NotLastFunder()');
+        if (block.number <= lastFundBlockNumber + 3) revert('RedditButton__Not3BlocksAway()');
+        _;
+    }
+    function claimTreasure() public payable onlyStartedAndNotEnded onlyLastFunder3BlocksAway {
         uint256 temp = totalAmountFunded;
         totalAmountFunded = 0;
-        for (uint256 i = 1; i <= currentOrderNumber; i++) {
-            addressToAmountFunded[clickOrderToAddress[i]] = 0;
-        }
-        currentOrderNumber = 0;
+        ended = true;
         payable(msg.sender).transfer(temp);
+        emit ClaimTreasure(msg.sender, temp);
     }
-    function get_totalAmountFunded() public view returns (uint256) {
+    function getTotalAmountFunded() public view returns (uint256) {
       return totalAmountFunded;
     }
-    function get_currentOrderNumber() public view returns (uint256) {
-      return currentOrderNumber;
+    function getLastFundBlockNumber() public view returns (uint256) {
+      return lastFundBlockNumber;
     }
-    function get_lastCallBlockNumber() public view returns (uint256) {
-      return lastCallBlockNumber;
+    function getOwner() public view returns (address) {
+      return owner;
+    }
+    function getLastFunder() public view returns (address) {
+      return lastFunder;
     }
 }

@@ -3,23 +3,19 @@
 pragma solidity ^0.8.17;
 
 contract RedditButton {
-    uint256 totalAmountFunded;
-    uint256 lastFundBlockNumber;
+    // uint256 public totalAmountFunded;  // the same as contract balance
+    uint256 public lastFundBlockNumber;
+    // The owner can use started to control whether start a new round of game.
     bool public started;
-    bool public ended;
 
-    address payable private immutable owner;
-    address private lastFunder;
-    //mapping from funders to their funded amount
-    // mapping(address => uint256) private addressToAmountFunded;
+    address payable public immutable owner;
+    address public lastFunder;
 
     event Start();
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event ClaimTreasure(address winner, uint amount);
 
     constructor() {
-        // currentOrderNumber = 0;
-        totalAmountFunded = 0;
         lastFundBlockNumber = block.number;
         owner = payable(msg.sender);
         lastFunder = address(0);
@@ -32,24 +28,9 @@ contract RedditButton {
         started = true;
         emit Start();
     }
-
-    function pressButton() external payable onlyStartedAndNotEnded returns(bool sufficient) {
-        //if not, add to mapping and funders array
-        require(msg.value >= 1e18, "Need at least 1 ETH.");
-	      emit Transfer(msg.sender, owner, msg.value);
-        // addressToAmountFunded[msg.sender] += msg.value;
-        totalAmountFunded += msg.value;
-        // currentOrderNumber += 1;
-        // clickOrderToAddress[currentOrderNumber] = msg.sender;
-        lastFunder = msg.sender;
-        lastFundBlockNumber = block.number;
-
-        return true;
-    }
     //modifier: https://medium.com/coinmonks/solidity-tutorial-all-about-modifiers-a86cf81c14cb
-    modifier onlyStartedAndNotEnded() {
+    modifier onlyStarted() {
         require(started, "not started");
-        require(!ended, "ended");
         _;
     }
     modifier onlyLastFunder3BlocksAway() {
@@ -59,23 +40,27 @@ contract RedditButton {
         if (block.number <= lastFundBlockNumber + 3) revert('RedditButton__Not3BlocksAway()');
         _;
     }
-    function claimTreasure() public payable onlyStartedAndNotEnded onlyLastFunder3BlocksAway {
-        uint256 temp = totalAmountFunded;
-        totalAmountFunded = 0;
-        ended = true;
-        payable(msg.sender).transfer(temp);
-        emit ClaimTreasure(msg.sender, temp);
+    function pressButton() external payable onlyStarted returns(bool sufficient) {
+        //if not, add to mapping and funders array
+        require(msg.value >= 1e12, "Need at least 1000 gwei.");
+	      emit Transfer(msg.sender, address(this), msg.value);
+        lastFunder = msg.sender;
+        lastFundBlockNumber = block.number;
+
+        return true;
     }
-    function getTotalAmountFunded() public view returns (uint256) {
-      return totalAmountFunded;
+    function claimTreasure() public payable onlyStarted onlyLastFunder3BlocksAway {
+        uint256 contractBalance = address(this).balance;
+        payable(msg.sender).transfer(contractBalance);
+        emit ClaimTreasure(msg.sender, contractBalance);
+        started = false;
     }
-    function getLastFundBlockNumber() public view returns (uint256) {
-      return lastFundBlockNumber;
+    receive () external payable {
+        // React to receiving ether
+        this.pressButton();
     }
-    function getOwner() public view returns (address) {
-      return owner;
-    }
-    function getLastFunder() public view returns (address) {
-      return lastFunder;
+    fallback () external payable {
+        // React to receiving ether
+        this.pressButton();
     }
 }

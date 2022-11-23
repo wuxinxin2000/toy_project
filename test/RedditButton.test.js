@@ -15,7 +15,9 @@ const { developmentChains } = require("../hardhat.config");
         owner = accounts[0];
         // const RedditButton = await ethers.getContractFactory("RedditButton");
         // redditButton = await RedditButton.deploy();
-        redditButton = await (await ethers.getContractFactory("RedditButton")).deploy();
+        redditButton = await (
+          await ethers.getContractFactory("RedditButton")
+        ).deploy();
         // await redditButton.deployed();
       });
       describe("start", function () {
@@ -49,7 +51,7 @@ const { developmentChains } = require("../hardhat.config");
         it("Fails if you don't send enough ETH", async () => {
           await expect(
             redditButton.pressButton({ value: 1000 })
-          ).to.be.revertedWith("Need at least 1 ETH.");
+          ).to.be.revertedWith("Need at least 1000 gwei.");
         });
         it("Updates the amount funded data structure", async () => {
           const redditButtonConnectedContract = await redditButton.connect(
@@ -59,17 +61,20 @@ const { developmentChains } = require("../hardhat.config");
             // from: accounts[1].address,
             value: sendValue,
           });
-
           await expect(res)
             .to.emit(redditButtonConnectedContract, "Transfer")
-            .withArgs(accounts[1].address, owner.address, sendValue);
-
-          const ownerResponse = await redditButtonConnectedContract.getOwner();
-          assert.equal(ownerResponse.toString(), owner.address);
-          const response =
-            await redditButtonConnectedContract.getTotalAmountFunded();
-          assert.equal(response.toString(), sendValue.toString());
-          const lastFunder = await redditButton.getLastFunder();
+            .withArgs(accounts[1].address, redditButton.address, sendValue);
+          const afterPressButtonBalance =
+            await redditButton.provider.getBalance(redditButton.address);
+          // const ownerResponse = await redditButtonConnectedContract.owner;
+          assert.equal((await redditButton.owner()).toString(), owner.address);
+          // const response =
+          //   await redditButtonConnectedContract.getTotalAmountFunded();
+          assert.equal(
+            afterPressButtonBalance.toString(),
+            sendValue.toString()
+          );
+          const lastFunder = await redditButton.lastFunder();
           assert.equal(lastFunder.toString(), accounts[1].address);
         });
       });
@@ -90,7 +95,7 @@ const { developmentChains } = require("../hardhat.config");
             });
           }
           lastFundBlockNumber =
-            await redditButtonConnectedContract.getLastFundBlockNumber();
+            await redditButtonConnectedContract.lastFundBlockNumber();
         });
         it("Not last funder", async () => {
           await expect(redditButton.claimTreasure()).to.be.revertedWith(
@@ -122,14 +127,14 @@ const { developmentChains } = require("../hardhat.config");
           const startingBalance = await redditButton.provider.getBalance(
             redditButton.address
           );
-          // console.log(`startingBalance: ${startingBalance}`);
+          console.log(`startingBalance: ${startingBalance}`);
           const startingLastFunderBalance =
             await redditButton.provider.getBalance(
               accounts[fundersNumber].address
             );
-          // console.log(
-          //   `startingLastFunderBalance: ${startingLastFunderBalance}`
-          // );
+          console.log(
+            `startingLastFunderBalance: ${startingLastFunderBalance}`
+          );
 
           const transactionResponse =
             await redditButtonConnectedContract.claimTreasure();
@@ -137,7 +142,7 @@ const { developmentChains } = require("../hardhat.config");
             .to.emit(redditButtonConnectedContract, "ClaimTreasure")
             .withArgs(
               accounts[fundersNumber].address,
-              sendValue.mul(fundersNumber)
+              sendValue.mul(fundersNumber).toString()
             );
           const transactionReceipt = await transactionResponse.wait();
           const { gasUsed, effectiveGasPrice } = transactionReceipt;
@@ -149,10 +154,12 @@ const { developmentChains } = require("../hardhat.config");
           const endingBalance = await redditButton.provider.getBalance(
             redditButton.address
           );
+          console.log(`endingBalance: ${endingBalance}`);
           const endingLastFunderBalance =
             await redditButton.provider.getBalance(
               accounts[fundersNumber].address
             );
+          console.log(`endingLastFunderBalance: ${endingLastFunderBalance}`);
 
           // Assert
           assert.equal(endingBalance, 0);
@@ -160,19 +167,18 @@ const { developmentChains } = require("../hardhat.config");
             startingBalance.add(startingLastFunderBalance).toString(),
             endingLastFunderBalance.add(gasCost).toString()
           );
-          assert.equal(await redditButton.getTotalAmountFunded(), "0");
 
           await expect(
             redditButtonConnectedContract.start()
-          ).to.be.revertedWith("started");
+          ).to.be.revertedWith("not owner");
           await expect(
             redditButtonConnectedContract.claimTreasure()
-          ).to.be.revertedWith("ended");
+          ).to.be.revertedWith("not started");
           await expect(
             redditButtonConnectedContract.pressButton({
               value: sendValue,
             })
-          ).to.be.revertedWith("ended");
+          ).to.be.revertedWith("not started");
         });
       });
     });

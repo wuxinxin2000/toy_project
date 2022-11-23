@@ -1,5 +1,10 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomiclabs/hardhat-etherscan");
+const {
+  privateKey1,
+  privateKey2,
+  privateKey3,
+  privateKey4 } = require("./secrets.json");
 // require("@nomiclabs/hardhat-waffle");
 // require("hardhat-deploy");
 
@@ -41,8 +46,22 @@ module.exports = {
       ],
       chainId: 1337,
     },
+    moonbeamalpha: {
+      url: "https://rpc.api.moonbase.moonbeam.network",
+      chainId: 1287, // 0x507 in hex,
+      accounts: [privateKey1, privateKey2, privateKey3, privateKey4],
+    },
   },
-  solidity: "0.8.17",
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.17",
+      },
+      {
+        version: "0.8.1",
+      },
+    ],
+  },
   // networkConfig,
   developmentChains,
   namedAccounts: {

@@ -40,15 +40,19 @@ contract RedditButton {
         if (block.number <= lastFundBlockNumber + 3) revert('RedditButton__Not3BlocksAway()');
         _;
     }
-    function pressButton() external payable onlyStarted returns(bool sufficient) {
-        //if not, add to mapping and funders array
+
+    function _pressButton() private onlyStarted returns(bool sufficient) {
         require(msg.value >= 1e12, "Need at least 1000 gwei.");
 	      emit Transfer(msg.sender, address(this), msg.value);
         lastFunder = msg.sender;
         lastFundBlockNumber = block.number;
-
         return true;
     }
+
+    function pressButton() external payable returns(bool sufficient) {
+        return _pressButton();
+    }
+
     function claimTreasure() public payable onlyStarted onlyLastFunder3BlocksAway {
         uint256 contractBalance = address(this).balance;
         payable(msg.sender).transfer(contractBalance);
@@ -57,10 +61,10 @@ contract RedditButton {
     }
     receive () external payable {
         // React to receiving ether
-        this.pressButton();
+        _pressButton();
     }
     fallback () external payable {
         // React to receiving ether
-        this.pressButton();
+        _pressButton();
     }
 }

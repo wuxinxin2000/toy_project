@@ -66,10 +66,7 @@ const { developmentChains } = require("../hardhat.config");
             .withArgs(accounts[1].address, redditButton.address, sendValue);
           const afterPressButtonBalance =
             await redditButton.provider.getBalance(redditButton.address);
-          // const ownerResponse = await redditButtonConnectedContract.owner;
           assert.equal((await redditButton.owner()).toString(), owner.address);
-          // const response =
-          //   await redditButtonConnectedContract.getTotalAmountFunded();
           assert.equal(
             afterPressButtonBalance.toString(),
             sendValue.toString()
@@ -179,6 +176,35 @@ const { developmentChains } = require("../hardhat.config");
               value: sendValue,
             })
           ).to.be.revertedWith("not started");
+          redditButton.start();
+        });
+      });
+
+      describe("fallback", function () {
+        it("act as pressButton", async () => {
+          await redditButton.start();
+          // Transfer sendValue from accounts[1] to redditButton contract, to act like pressButton
+          console.log("started");
+          const res = await accounts[1].sendTransaction({
+            to: redditButton.address,
+            value: sendValue,
+            gasLimit: (await ethers.provider.getBlock("latest")).gasLimit,
+          });
+          console.log("after transfer");
+          expect(
+            await redditButton.provider.getBalance(redditButton.address)
+          ).to.equal(sendValue);
+          await expect(res)
+            .to.emit(redditButton, "Transfer")
+            .withArgs(accounts[1].address, redditButton.address, sendValue);
+          const afterPressButtonBalance =
+            await redditButton.provider.getBalance(redditButton.address);
+          assert.equal(
+            afterPressButtonBalance.toString(),
+            sendValue.toString()
+          );
+          const lastFunder = await redditButton.lastFunder();
+          assert.equal(lastFunder.toString(), accounts[1].address);
         });
       });
     });

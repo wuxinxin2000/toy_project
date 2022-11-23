@@ -41,33 +41,26 @@ developmentChains.includes(network.name)
         // Assert
         assert.equal(endingBalance, 0);
       });
-  //     it("allows people to send money acting like press button", async function () {
-  //       await redditButton.start();
+      // it("allows people to send money acting like press button", async function () {
+      //   await redditButton.start();
 
-  //       // Transfer sendValue from accounts[1] to redditButton contract, to act like pressButton
-  //       // await redditButton
-  //       //   // .connect(accounts[1]))
-  //       //   .transfer().send({from: accounts[1].address, to: redditButton.address, value: sendValue});
-  // //         myContractInstance.transfer('some params')
-  // //  .send({
-  // //          from: account address, 
-  // //          gas: 0x00, 
-  // //          gasPrice: 0x00
-  // //       }).then(receipt=> {consol.log(receipt)});
-  //       accounts[1].transfer(redditButton.address, sendValue);
-  //       expect(await redditButton.balanceOf(redditButton.address)).to.equal(
-  //         sendValue
-  //       );
-  //       await expect(res)
-  //         .to.emit(redditButton, "Transfer")
-  //         .withArgs(accounts[1].address, redditButton.address, sendValue);
-  //       const afterPressButtonBalance =
-  //         await redditButton.provider.getBalance(redditButton.address);
-  //       assert.equal(
-  //         afterPressButtonBalance.toString(),
-  //         sendValue.toString()
-  //       );
-  //       const lastFunder = await redditButton.lastFunder();
-  //       assert.equal(lastFunder.toString(), accounts[1].address);
-  //     });
+      //   // Transfer sendValue from accounts[1] to redditButton contract, to act like pressButton
+      //   await redditButton
+      //     .connect(accounts[1])
+      //     .transfer(redditButton.address, sendValue);
+      //   expect(await redditButton.balanceOf(redditButton.address)).to.equal(
+      //     sendValue
+      //   );
+      //   await expect(res)
+      //     .to.emit(redditButton, "Transfer")
+      //     .withArgs(accounts[1].address, redditButton.address, sendValue);
+      //   const afterPressButtonBalance =
+      //     await redditButton.provider.getBalance(redditButton.address);
+      //   assert.equal(
+      //     afterPressButtonBalance.toString(),
+      //     sendValue.toString()
+      //   );
+      //   const lastFunder = await redditButton.lastFunder();
+      //   assert.equal(lastFunder.toString(), accounts[1].address);
+      // });
     });

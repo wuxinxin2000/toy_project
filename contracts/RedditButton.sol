@@ -55,6 +55,7 @@ contract RedditButton {
 
     function claimTreasure() public payable onlyStarted onlyLastFunder3BlocksAway {
         uint256 contractBalance = address(this).balance;
+        if (contractBalance == 0) revert('RedditButton__NotHaveEnoughFund()');
         payable(msg.sender).transfer(contractBalance);
         emit ClaimTreasure(msg.sender, contractBalance);
         started = false;

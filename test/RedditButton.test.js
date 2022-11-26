@@ -7,9 +7,8 @@ const { developmentChains } = require("../hardhat.config");
   : describe("RedditButton", function () {
       let redditButton;
       let owner;
-      const sendValue = ethers.utils.parseEther("1");
+      const sendValue = ethers.utils.parseEther("0.001");
       let accounts;
-      // let deployedRedditButton;
       beforeEach(async () => {
         accounts = await ethers.getSigners();
         owner = accounts[0];
@@ -58,7 +57,6 @@ const { developmentChains } = require("../hardhat.config");
             accounts[1]
           );
           let res = await redditButtonConnectedContract.pressButton({
-            // from: accounts[1].address,
             value: sendValue,
           });
           await expect(res)
@@ -177,32 +175,58 @@ const { developmentChains } = require("../hardhat.config");
             })
           ).to.be.revertedWith("not started");
           redditButton.start();
+          await expect(
+            redditButtonConnectedContract.claimTreasure()
+          ).to.be.revertedWith("RedditButton__NotHaveEnoughFund()");
         });
       });
 
       describe("fallback", function () {
-        it("act as pressButton", async () => {
+        it("Transfering money acts as pressButton", async () => {
           await redditButton.start();
           // Transfer sendValue from accounts[1] to redditButton contract, to act like pressButton
-          console.log("started");
           const res = await accounts[1].sendTransaction({
             to: redditButton.address,
             value: sendValue,
             gasLimit: (await ethers.provider.getBlock("latest")).gasLimit,
           });
-          console.log("after transfer");
+          expect(
+            await redditButton.provider.getBalance(redditButton.address)
+          ).to.equal(sendValue);
+          // const afterPressButtonBalance =
+          //   await redditButton.provider.getBalance(redditButton.address);
+          // assert.equal(
+          //   afterPressButtonBalance.toString(),
+          //   sendValue.toString()
+          // );
+          await expect(res)
+            .to.emit(redditButton, "Transfer")
+            .withArgs(accounts[1].address, redditButton.address, sendValue);
+          const lastFunder = await redditButton.lastFunder();
+          assert.equal(lastFunder.toString(), accounts[1].address);
+        });
+        it("Calling non-existing function acts as pressButton", async () => {
+          const nonExistentFuncSignature = "nonExistentFunction()";
+          const fakeRedditButton = new ethers.Contract(
+            redditButton.address,
+            [
+              ...redditButton.interface.fragments,
+              `function ${nonExistentFuncSignature} external payable`,
+            ],
+            owner
+          );
+          await redditButton.start();
+          const res = await (await fakeRedditButton.connect(accounts[1]))[
+            nonExistentFuncSignature
+          ]({
+            value: sendValue,
+          });
           expect(
             await redditButton.provider.getBalance(redditButton.address)
           ).to.equal(sendValue);
           await expect(res)
             .to.emit(redditButton, "Transfer")
             .withArgs(accounts[1].address, redditButton.address, sendValue);
-          const afterPressButtonBalance =
-            await redditButton.provider.getBalance(redditButton.address);
-          assert.equal(
-            afterPressButtonBalance.toString(),
-            sendValue.toString()
-          );
           const lastFunder = await redditButton.lastFunder();
           assert.equal(lastFunder.toString(), accounts[1].address);
         });

@@ -1,16 +1,17 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomiclabs/hardhat-etherscan");
+require("dotenv").config();
+
 const {
   privateKey1,
   privateKey2,
   privateKey3,
-  privateKey4 } = require("./secrets.json");
+  privateKey4,
+} = require("./secrets.json");
 // require("@nomiclabs/hardhat-waffle");
 // require("hardhat-deploy");
 
 const GANACHE_RPC_URL = "HTTP://127.0.0.1:7545";
-const PRIVATE_KEY_1 =
-  "0x2e84483c0cdefe671a20453fcd18cda3ac9d6f627107af94383aeefdf881e630";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
 // const networkConfig = {
@@ -45,11 +46,13 @@ module.exports = {
         "0x83694db5e8bb614a1aae7d0d85800123b4c5961494a51808c3e1c8a8265464fa",
       ],
       chainId: 1337,
+      blockGasLimit: 8000000, // Network block gasLimit
     },
-    moonbeamalpha: {
+    moonbasealpha: {
       url: "https://rpc.api.moonbase.moonbeam.network",
       chainId: 1287, // 0x507 in hex,
       accounts: [privateKey1, privateKey2, privateKey3, privateKey4],
+      blockGasLimit: 8000000, // Network block gasLimit
     },
   },
   solidity: {
@@ -61,6 +64,12 @@ module.exports = {
         version: "0.8.1",
       },
     ],
+  },
+  // For resolving below error happening in staging test 1:
+  // "Error: Timeout of 40000ms exceeded. For async tests and hooks, ensure "done()" is called;
+  // if returning a Promise, ensure it resolves."
+  mocha: {
+    timeout: 100000000,
   },
   // networkConfig,
   developmentChains,
